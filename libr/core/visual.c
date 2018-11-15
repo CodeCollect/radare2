@@ -1869,9 +1869,31 @@ static bool isNumber (RCore *core, int ch) {
 	return false;
 }
 
+static char numbuf[32] = {0};
+static int numbuf_i = 0;
+
+static void numbuf_append(int ch) {
+	if (numbuf_i >= sizeof (numbuf) - 1) {
+		numbuf_i = 0;
+	}
+	numbuf[numbuf_i++] = ch;
+	numbuf[numbuf_i] = 0;
+}
+
+static int numbuf_pull() {
+	int distance = 1;
+	if (numbuf_i) {
+		numbuf[numbuf_i] = 0;
+		distance = atoi (numbuf);
+		if (!distance) {
+			distance = 1;
+		}
+		numbuf_i = 0;
+	}
+	return distance;
+}
+
 R_API int r_core_visual_cmd(RCore *core, const char *arg) {
-	static char numbuf[32] = {0};
-	static int numbuf_i = 0;
 	ut8 ch = arg[0];
 	RAsmOp op;
 	ut64 offset = core->offset;
@@ -1902,11 +1924,7 @@ R_API int r_core_visual_cmd(RCore *core, const char *arg) {
 		if (isDisasmPrint (core->printidx)) {
 			r_core_visual_jump (core, ch);
 		} else {
-			if (numbuf_i >= sizeof (numbuf) - 1) {
-				numbuf_i = 0;
-			}
-			numbuf[numbuf_i++] = ch;
-			numbuf[numbuf_i] = 0;
+			numbuf_append (ch);
 		}
 	} else {
 		switch (ch) {
@@ -2364,15 +2382,7 @@ R_API int r_core_visual_cmd(RCore *core, const char *arg) {
 		case 'h':
 		case 'l':
 			{
-				int distance = 1;
-				if (numbuf_i) {
-					numbuf[numbuf_i] = 0;
-					distance = atoi (numbuf);
-					if (!distance) {
-						distance = 1;
-					}
-					numbuf_i = 0;
-				}
+				int distance = numbuf_pull ();
 				if (core->print->cur_enabled) {
 					if (ch == 'h') {
 						for (i = 0; i < distance; i++) {
@@ -2394,15 +2404,7 @@ R_API int r_core_visual_cmd(RCore *core, const char *arg) {
 		case 'L':
 		case 'H':
 			{
-				int distance = 1;
-				if (numbuf_i) {
-					numbuf[numbuf_i] = 0;
-					distance = atoi (numbuf);
-					if (!distance) {
-						distance = 1;
-					}
-					numbuf_i = 0;
-				}
+				int distance = numbuf_pull ();
 				if (core->print->cur_enabled) {
 					if (ch == 'H') {
 						for (i = 0; i < distance; i++) {
@@ -2423,15 +2425,7 @@ R_API int r_core_visual_cmd(RCore *core, const char *arg) {
 			break;
 		case 'j':
 			if (core->print->cur_enabled) {
-				int distance = 1;
-				if (numbuf_i) {
-					numbuf[numbuf_i] = 0;
-					distance = atoi (numbuf);
-					if (!distance) {
-						distance = 1;
-					}
-					numbuf_i = 0;
-				}
+				int distance = numbuf_pull ();
 				for (i = 0; i < distance; i++) {
 					cursor_nextrow (core, false);
 				}
@@ -2464,15 +2458,7 @@ R_API int r_core_visual_cmd(RCore *core, const char *arg) {
 			break;
 		case 'J':
 			if (core->print->cur_enabled) {
-				int distance = 1;
-				if (numbuf_i) {
-					numbuf[numbuf_i] = 0;
-					distance = atoi (numbuf);
-					if (!distance) {
-						distance = 1;
-					}
-					numbuf_i = 0;
-				}
+				int distance = numbuf_pull ();
 				for (i = 0; i < distance; i++) {
 					cursor_nextrow (core, true);
 				}
@@ -2490,15 +2476,7 @@ R_API int r_core_visual_cmd(RCore *core, const char *arg) {
 			break;
 		case 'k':
 			if (core->print->cur_enabled) {
-				int distance = 1;
-				if (numbuf_i) {
-					numbuf[numbuf_i] = 0;
-					distance = atoi (numbuf);
-					if (!distance) {
-						distance = 1;
-					}
-					numbuf_i = 0;
-				}
+				int distance = numbuf_pull ();
 				for (i = 0; i < distance; i++) {
 					cursor_prevrow (core, false);
 				}
@@ -2521,15 +2499,7 @@ R_API int r_core_visual_cmd(RCore *core, const char *arg) {
 			break;
 		case 'K':
 			if (core->print->cur_enabled) {
-				int distance = 1;
-				if (numbuf_i) {
-					numbuf[numbuf_i] = 0;
-					distance = atoi (numbuf);
-					if (!distance) {
-						distance = 1;
-					}
-					numbuf_i = 0;
-				}
+				int distance = numbuf_pull ();
 				for (i = 0; i < distance; i++) {
 					cursor_prevrow (core, true);
 				}
